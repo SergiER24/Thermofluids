@@ -1,18 +1,19 @@
-# Termofluidos
+# Thermofluids
 
-Repositorio curado del trabajo realizado durante el semestre para la materia de
-Termofluidos.
+Selected materials from the Thermofluids course at Universidad de los Andes.
+This repository is organized as a university course archive, not as a semester
+portfolio.
 
-## Estructura
+## Structure
 
-- `notebooks/`: cuadernos de Jupyter del curso.
-- `datos/`: archivos fuente de laboratorio.
-- `labs/`: modelos y preinformes de laboratorio.
-- `talleres/`: fuentes y documentos finales de talleres.
-- `archive/legacy_remote/`: notebook antiguo conservado desde el repositorio
-  remoto previo.
+- `notebooks/`: Jupyter notebooks from the course.
+- `data/`: laboratory source files.
+- `labs/`: laboratory models and pre-lab reports.
+- `workshops/`: workshop sources and selected final documents.
+- `archive/legacy_remote/`: notebook preserved from the earlier remote
+  repository.
 
-## Requisitos
+## Requirements
 
 - Python 3
 - Jupyter
@@ -21,9 +22,9 @@ Termofluidos.
 - `matplotlib`
 - `CoolProp`
 
-## Nota
+## Notes
 
-El notebook `Calculos_lab1_termo3.ipynb` usa el archivo `../datos/Lab 1.xls`.
-
-No se versionan dependencias, temporales, vistas previas ni material externo de
-referencia usado durante la elaboracion de los trabajos.
+The `Calculos_lab1_termo3.ipynb` notebook uses `../data/Lab 1.xls`.
+Original course artifacts may retain their submitted filenames and language.
+Dependencies, temporary files, previews, and external reference material are
+intentionally excluded.
