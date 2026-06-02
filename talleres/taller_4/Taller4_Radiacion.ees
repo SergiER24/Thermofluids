@@ -1,0 +1,109 @@
+$UnitSystem SI K Pa J
+
+{ Taller 4 - Termofluidos III
+  Modelo por celda regenerado a partir del esquema de resistencias del taller:
+  placas en serie + nucleo honeycomb en paralelo.
+
+  Modelo del nucleo:
+  - Conduccion por las paredes del honeycomb
+  - Conveccion natural del aire en la cavidad
+  - Radiacion entre las dos caras internas enfrentadas usando F12 de rectangulos paralelos
+
+  Variables internas resueltas por EES:
+  T0_K  = temperatura de la cara interna inferior de la cavidad
+  T1_K  = temperatura de la cara interna superior de la cavidad
+  Tfilm_K = temperatura de pelicula del aire
+
+  Sensibilidad sugerida:
+  Tsi_C, Tso_C, L2_m, epsilon
+
+  Dataset sugerido para el bono de ML, segun la sensibilidad implementada en el notebook:
+  Entradas: Tsi_C, Tso_C, L2_m
+  Salidas: q_W, qpp_W_m2, T0_C, T1_C, Tf_C, Ra, Nu, h_conv_W_m2K, h_rad_eff_W_m2K, F12
+}
+
+"Caso nominal del enunciado"
+Tsi_C=25
+Tso_C=-10
+epsilon=0.85
+
+W_m=0.01
+L1_m=0.0125
+L2_m=0.05
+L3_m=0.0125
+t_m=0.002
+
+k1_W_mK=0.0778
+k2_W_mK=0.170
+P_Pa=101325
+g=9.81
+sigma=5.670374419E-8
+
+"Conversion de temperatura"
+Tsi_K=Tsi_C+273.15
+Tso_K=Tso_C+273.15
+
+"Geometria"
+a_open_m=W_m-t_m
+A_total_m2=W_m^2
+A_open_m2=a_open_m^2
+A_wall_m2=A_total_m2-A_open_m2
+
+"Resistencias de conduccion"
+R_in_K_W=L1_m/(k1_W_mK*A_total_m2)
+R_out_K_W=L3_m/(k1_W_mK*A_total_m2)
+R_wall_K_W=L2_m/(k2_W_mK*A_wall_m2)
+
+"Factor de vision entre las dos superficies internas enfrentadas"
+X_bar=a_open_m/L2_m
+Y_bar=a_open_m/L2_m
+
+geom_log=0.5*LN(((1+X_bar^2)*(1+Y_bar^2))/(1+X_bar^2+Y_bar^2))
+geom_tan_x=X_bar*SQRT(1+Y_bar^2)*ARCTAN(X_bar/SQRT(1+Y_bar^2))
+geom_tan_y=Y_bar*SQRT(1+X_bar^2)*ARCTAN(Y_bar/SQRT(1+X_bar^2))
+geom_edge=X_bar*ARCTAN(X_bar)+Y_bar*ARCTAN(Y_bar)
+F12=(2/(PI*X_bar*Y_bar))*(geom_log+geom_tan_x+geom_tan_y-geom_edge)
+
+"Temperaturas internas desconocidas del nucleo"
+Tfilm_K=0.5*(T0_K+T1_K)
+
+"Propiedades del aire a temperatura de pelicula"
+rho_air_kg_m3=DENSITY(Air,T=Tfilm_K,P=P_Pa)
+mu_air_Pa_s=VISCOSITY(Air,T=Tfilm_K,P=P_Pa)
+k_air_W_mK=CONDUCTIVITY(Air,T=Tfilm_K,P=P_Pa)
+cp_air_J_kgK=CP(Air,T=Tfilm_K,P=P_Pa)
+
+beta_air_1_K=1/Tfilm_K
+nu_air_m2_s=mu_air_Pa_s/rho_air_kg_m3
+alpha_air_m2_s=k_air_W_mK/(rho_air_kg_m3*cp_air_J_kgK)
+Pr_air=nu_air_m2_s/alpha_air_m2_s
+
+"Conveccion natural en el recinto horizontal"
+Ra=g*beta_air_1_K*(T0_K-T1_K)*L2_m^3/(nu_air_m2_s*alpha_air_m2_s)
+Ra_pos=MAX(Ra,1E-12)
+Nu=MAX(1,0.069*Ra_pos^(1/3))
+h_conv_W_m2K=Nu*k_air_W_mK/L2_m
+R_conv_K_W=1/(h_conv_W_m2K*A_open_m2)
+
+"Radiacion entre las dos caras internas enfrentadas"
+Q_rad_W=sigma*(T0_K^4-T1_K^4)/((1-epsilon)/(A_open_m2*epsilon)+1/(A_open_m2*F12)+(1-epsilon)/(A_open_m2*epsilon))
+R_rad_eff_K_W=(T0_K-T1_K)/Q_rad_W
+h_rad_eff_W_m2K=Q_rad_W/(A_open_m2*(T0_K-T1_K))
+
+"Resistencia equivalente del nucleo"
+R_core_K_W=1/(1/R_wall_K_W+1/R_conv_K_W+1/R_rad_eff_K_W)
+
+"Balance total por celda"
+q_W=(Tsi_K-Tso_K)/(R_in_K_W+R_core_K_W+R_out_K_W)
+T0_K=Tsi_K-q_W*R_in_K_W
+T1_K=Tso_K+q_W*R_out_K_W
+
+"Desglose de flujos en el nucleo"
+Q_cond_W=(T0_K-T1_K)/R_wall_K_W
+Q_conv_W=(T0_K-T1_K)/R_conv_K_W
+
+"Salidas utiles"
+qpp_W_m2=q_W/A_total_m2
+T0_C=T0_K-273.15
+T1_C=T1_K-273.15
+Tf_C=Tfilm_K-273.15

@@ -1,0 +1,20 @@
+{ Taller 5 - Punto 1 }
+{ Version de respaldo: F fijo para evitar cualquier problema numerico en EES }
+
+cp_alcohol = 2670
+cp_agua    = 4190
+m_alcohol  = 0.7
+U          = 823
+
+DeltaT_alcohol = 40
+DeltaT_agua    = 55
+
+DeltaT1 = 30
+DeltaT2 = 15
+F = 0.7554471214
+
+Qdot   = m_alcohol*cp_alcohol*DeltaT_alcohol
+m_agua = Qdot/(cp_agua*DeltaT_agua)
+DTlm_cf = (DeltaT1 - DeltaT2)/ln(DeltaT1/DeltaT2)
+DTlm = F*DTlm_cf
+A = Qdot/(U*DTlm)

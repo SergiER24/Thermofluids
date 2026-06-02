@@ -1,0 +1,435 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{siunitx}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{float}
+\geometry{margin=2.2cm}
+\sisetup{per-mode=symbol,output-decimal-marker={,}}
+
+\title{Taller 5 -- Termofluidos III\\Resolucion detallada}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{Observaciones previas}
+
+Se resolvieron los tres puntos y se adjuntan dos soportes de calculo:
+
+\begin{itemize}
+  \item el archivo \texttt{Taller5\_Punto1.ees} para el punto 1;
+  \item el cuaderno \texttt{notebooks/Taller5\_HX\_CoolProp.ipynb} para los puntos 2 y 3.
+\end{itemize}
+
+Hay dos aspectos del enunciado que no quedan completamente cerrados:
+
+\begin{itemize}
+  \item En el \textbf{punto 2} no se especifican las temperaturas de evaporacion y condensacion del ciclo ideal de R134a. Por tanto, para producir una solucion numerica consistente se adopto el caso base
+  \[
+  T_{\mathrm{evap}}=\SI{0}{^\circ C}, \qquad T_{\mathrm{cond}}=\SI{40}{^\circ C}.
+  \]
+  El notebook deja ambos parametros editables.
+  \item En el \textbf{punto 3} se pide un unico diametro \(D\), pero no se especifica la geometria completa del doble tubo ni el diametro del anular. Por ello se adopta un modelo simplificado con dos pasos equivalentes de diametro hidraulico \(D\), pared delgada y resistencia de conduccion despreciable, de modo que
+  \[
+  \frac{1}{U}\approx \frac{1}{h_c}+\frac{1}{h_h}.
+  \]
+\end{itemize}
+
+\section*{1. Intercambiador carcasa--tubos con correccion \(F\)}
+
+\subsection*{Datos}
+
+\[
+\dot m_{alc}=\SI{0.7}{kg/s}, \quad c_{p,alc}=\SI{2670}{J/(kg.K)}, \quad T_{c,i}=\SI{20}{^\circ C}, \quad T_{c,o}=\SI{60}{^\circ C}
+\]
+\[
+c_{p,agua}=\SI{4190}{J/(kg.K)}, \quad T_{h,i}=\SI{90}{^\circ C}, \quad T_{h,o}=\SI{35}{^\circ C}, \quad U=\SI{823}{W/(m^2.K)}
+\]
+
+\subsection*{Balance de energia}
+
+La carga termica se fija por el alcohol etilico:
+\[
+\dot Q=\dot m_{alc}\,c_{p,alc}\,(T_{c,o}-T_{c,i})
+\]
+\[
+\dot Q=(0.7)(2670)(60-20)=\SI{74760}{W}=\SI{74.76}{kW}
+\]
+
+Del lado del agua:
+\[
+\dot Q=\dot m_{agua}\,c_{p,agua}\,(T_{h,i}-T_{h,o})
+\]
+\[
+\dot m_{agua}=\frac{\dot Q}{c_{p,agua}(T_{h,i}-T_{h,o})}
+=\frac{74760}{4190(90-35)}
+=\SI{0.3244}{kg/s}
+\]
+
+\subsection*{Factor de correccion}
+
+Para el factor de correccion se uso la expresion general de Fakheri para un intercambiador carcasa--tubos con numero par de pasos por tubo:
+\[
+R=\frac{T_{h,i}-T_{h,o}}{T_{c,o}-T_{c,i}}
+=\frac{90-35}{60-20}=1.375
+\]
+\[
+P=\frac{T_{c,o}-T_{c,i}}{T_{h,i}-T_{c,i}}
+=\frac{60-20}{90-20}=0.5714
+\]
+
+Con \(N_s=2\) pasos por carcasa:
+\[
+S=\frac{\sqrt{R^2+1}}{R-1}=4.5338
+\]
+\[
+W=\left(\frac{1-PR}{1-P}\right)^{1/N_s}
+=0.7071
+\]
+\[
+F=\frac{S\ln W}{\ln\left(\dfrac{1+W-S+SW}{1+W+S-SW}\right)}
+=0.7554
+\]
+
+\subsection*{LMTD corregida y area}
+
+Tomando la referencia de contracorriente:
+\[
+\Delta T_1=T_{h,i}-T_{c,o}=90-60=\SI{30}{K}
+\]
+\[
+\Delta T_2=T_{h,o}-T_{c,i}=35-20=\SI{15}{K}
+\]
+\[
+\Delta T_{lm,cf}=\frac{\Delta T_1-\Delta T_2}{\ln(\Delta T_1/\Delta T_2)}
+=\frac{30-15}{\ln(30/15)}
+=\SI{21.64}{K}
+\]
+
+La diferencia media efectiva es:
+\[
+\Delta T_{lm}=F\,\Delta T_{lm,cf}
+=(0.7554)(21.64)=\SI{16.35}{K}
+\]
+
+Finalmente,
+\[
+\dot Q=UA\Delta T_{lm}
+\qquad \Longrightarrow \qquad
+A=\frac{\dot Q}{U\Delta T_{lm}}
+\]
+\[
+A=\frac{74760}{(823)(16.35)}=\SI{5.56}{m^2}
+\]
+
+\subsection*{Resultado del punto 1}
+
+\[
+\boxed{A \approx \SI{5.56}{m^2}}
+\]
+
+Adicionalmente, el flujo masico de agua compatible con las temperaturas dadas es
+\[
+\boxed{\dot m_{agua}\approx \SI{0.324}{kg/s}}
+\]
+
+\section*{2. Evaporador de chiller con R134a}
+
+\subsection*{Hipotesis de trabajo}
+
+Para poder obtener una solucion numerica unica se adopto el siguiente ciclo ideal de referencia:
+
+\begin{itemize}
+  \item estado 1: vapor saturado a la salida del evaporador, \(T_{\mathrm{evap}}=\SI{0}{^\circ C}\);
+  \item estado 2: compresion isentropica hasta la presion de condensacion;
+  \item estado 3: liquido saturado a la salida del condensador, \(T_{\mathrm{cond}}=\SI{40}{^\circ C}\);
+  \item estado 4: valvula de expansion, \(h_4=h_3\).
+\end{itemize}
+
+Ademas:
+
+\begin{itemize}
+  \item el R134a evapora a temperatura aproximadamente constante en la coraza;
+  \item \(h_{R134a}=\SI{5000}{W/(m^2.K)}\), segun el enunciado;
+  \item para el agua se usa Gnielinski y propiedades a temperatura bulto;
+  \item se toma \(D=\SI{0.300}{m}\) y ancho de coraza \(\SI{6}{m}\).
+\end{itemize}
+
+\subsection*{a) Calor transferido en el evaporador}
+
+Con CoolProp para el caso base:
+\[
+P_{\mathrm{evap}}=\SI{292.8}{kPa}, \qquad
+P_{\mathrm{cond}}=\SI{1016.6}{kPa}
+\]
+\[
+q_L=h_1-h_4=h_1-h_3=\SI{142.19}{kJ/kg}
+\]
+
+Luego,
+\[
+\dot Q=\dot m_R\,q_L=(3.42)(142.19)=\SI{486.30}{kW}
+\]
+
+\[
+\boxed{\dot Q \approx \SI{486.3}{kW}}
+\]
+
+\subsection*{b) Temperatura de salida del agua}
+
+\[
+\dot Q=\dot m_w c_{p,w}(T_{w,i}-T_{w,o})
+\]
+
+Usando propiedades del agua a la temperatura bulto iterada, el calculo da:
+\[
+T_{w,o}\approx \SI{8.18}{^\circ C}
+\]
+
+\[
+\boxed{T_{w,o}\approx \SI{8.18}{^\circ C}}
+\]
+
+\subsection*{c) Efectividad del intercambiador}
+
+Como el refrigerante cambia de fase a temperatura casi constante, el lado del agua controla \(C_{\min}\). Por tanto:
+\[
+\varepsilon=\frac{\dot Q}{C_{\min}(T_{w,i}-T_{R,\mathrm{sat}})}
+=\frac{\dot Q}{\dot m_w c_{p,w}(T_{w,i}-T_{\mathrm{evap}})}
+\]
+
+Sustituyendo,
+\[
+\varepsilon \approx 0.4549
+\]
+
+\[
+\boxed{\varepsilon \approx 0.455}
+\]
+
+\subsection*{d) Longitud requerida del tubo}
+
+Con \(T_{w,b}\approx \SI{11.59}{^\circ C}\), las propiedades del agua a \(\SI{1}{atm}\) llevan a:
+\[
+Re_w \approx 5.78\times 10^4,
+\qquad
+Pr_w \approx 8.99
+\]
+
+Para tubo liso:
+\[
+f=\left(0.79\ln Re -1.64\right)^{-2}
+\]
+\[
+Nu=\frac{(f/8)(Re-1000)Pr}{1+12.7(f/8)^{1/2}(Pr^{2/3}-1)}
+\]
+
+De aqui:
+\[
+Nu_w \approx 414.23,
+\qquad
+h_w=\frac{Nu\,k}{D}\approx \SI{803.68}{W/(m^2.K)}
+\]
+
+El coeficiente global resulta:
+\[
+\frac{1}{U}=\frac{1}{h_R}+\frac{1}{h_w}
+\qquad \Longrightarrow \qquad
+U\approx \SI{692.39}{W/(m^2.K)}
+\]
+
+La diferencia media logaritmica entre el agua y el refrigerante:
+\[
+\Delta T_1=T_{w,i}-T_{\mathrm{evap}}=15-0=\SI{15}{K}
+\]
+\[
+\Delta T_2=T_{w,o}-T_{\mathrm{evap}}=8.18-0=\SI{8.18}{K}
+\]
+\[
+\Delta T_{lm}=\frac{\Delta T_1-\Delta T_2}{\ln(\Delta T_1/\Delta T_2)}
+=\SI{11.25}{K}
+\]
+
+Entonces:
+\[
+A=\frac{\dot Q}{U\Delta T_{lm}}
+=\frac{486304}{(692.39)(11.25)}
+=\SI{62.46}{m^2}
+\]
+
+Como \(A=\pi D L\),
+\[
+L=\frac{A}{\pi D}
+=\frac{62.46}{\pi(0.300)}
+=\SI{66.27}{m}
+\]
+
+\[
+\boxed{L_{\mathrm{req}}\approx \SI{66.27}{m}}
+\]
+
+\subsection*{e) Numero de pasos \(N\)}
+
+Si cada paso recorre el ancho de la coraza, \(\SI{6}{m}\), entonces:
+\[
+N=\frac{L}{6}=\frac{66.27}{6}=11.04
+\]
+
+Constructivamente se selecciona:
+\[
+\boxed{N \approx 11\ \text{pasos}}
+\]
+
+Con \(N=11\) se tendria \(L \approx \SI{66}{m}\), lo que cambia la carga termica menos de \(0.3\%\), por lo cual la aproximacion es aceptable.
+
+\subsection*{f) Diagrama \(T\) vs. longitud}
+
+El perfil calculado para el caso base se muestra en la Figura~\ref{fig:p2}. El agua se enfria de manera monotona desde \(\SI{15}{^\circ C}\) hasta cerca de \(\SI{8.18}{^\circ C}\), mientras que el R134a se mantiene practicamente a temperatura constante por el cambio de fase.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.82\textwidth]{outputs/taller5_p2_temperaturas.png}
+  \caption{Perfil de temperaturas del punto 2 para el caso base \(T_{\mathrm{evap}}=\SI{0}{^\circ C}\), \(T_{\mathrm{cond}}=\SI{40}{^\circ C}\).}
+  \label{fig:p2}
+\end{figure}
+
+\section*{3. Doble tubo en contracorriente con aire}
+
+\subsection*{Modelo}
+
+Se imponen dos restricciones simultaneas:
+
+\begin{itemize}
+  \item la corriente fria debe salir a \(\SI{350}{K}\);
+  \item la caida de presion maxima permitida en la corriente fria es \(\Delta p_{f,\max}=\SI{15}{kPa}\).
+\end{itemize}
+
+Como ambas corrientes son aire y los flujos masicos son iguales, primero se fija la carga requerida:
+\[
+\dot Q=\dot m\,c_{p,c}(T_{c,o}-T_{c,i})
+\]
+
+Con propiedades de aire a temperatura bulto:
+\[
+\dot m=\SI{0.0025}{kg/s}, \quad
+T_{c,i}=\SI{250}{K}, \quad
+T_{c,o}=\SI{350}{K}, \quad
+T_{h,i}=\SI{400}{K}
+\]
+\[
+c_{p,c}\approx \SI{1006.37}{J/(kg.K)}
+\]
+\[
+\dot Q=(0.0025)(1006.37)(350-250)=\SI{251.59}{W}
+\]
+
+Del balance de energia del lado caliente:
+\[
+\dot Q=\dot m\,c_{p,h}(T_{h,i}-T_{h,o})
+\]
+de donde se obtiene iterativamente
+\[
+T_{h,o}\approx \SI{300.28}{K}
+\]
+
+La LMTD en contracorriente queda:
+\[
+\Delta T_1=T_{h,i}-T_{c,o}=400-350=\SI{50}{K}
+\]
+\[
+\Delta T_2=T_{h,o}-T_{c,i}=300.28-250=\SI{50.28}{K}
+\]
+\[
+\Delta T_{lm}\approx \SI{50.14}{K}
+\]
+
+\subsection*{Correlaciones usadas}
+
+Para tubo liso:
+\[
+f=\left(0.79\ln Re -1.64\right)^{-2}
+\]
+\[
+Nu=\frac{(f/8)(Re-1000)Pr}{1+12.7(f/8)^{1/2}(Pr^{2/3}-1)}
+\]
+
+Ademas:
+\[
+\Delta p_f=f\frac{L}{D}\frac{\rho V^2}{2}
+\]
+\[
+\dot Q=U\pi D L \Delta T_{lm}
+\]
+
+El sistema anterior se resolvio iterativamente en \(D\) y \(L\).
+
+\subsection*{a) Diametro y longitud}
+
+La solucion numerica es:
+\[
+\boxed{D \approx \SI{6.69}{mm}}
+\]
+\[
+\boxed{L \approx \SI{1.90}{m}}
+\]
+
+Los parametros principales en el punto de diseno son:
+
+\begin{center}
+\begin{tabular}{lr}
+\toprule
+Magnitud & Valor \\
+\midrule
+\(Re_c\) & \(2.567\times 10^4\) \\
+\(Re_h\) & \(2.279\times 10^4\) \\
+\(f_c\) & 0.02456 \\
+\(f_h\) & 0.02530 \\
+\(Nu_c\) & 62.64 \\
+\(Nu_h\) & 56.92 \\
+\(h_c\) & \SI{247.06}{W/(m^2.K)} \\
+\(h_h\) & \SI{255.37}{W/(m^2.K)} \\
+\(U\) & \SI{125.57}{W/(m^2.K)} \\
+\(\Delta p_f\) & \SI{15.0}{kPa} \\
+\(V_c\) & \SI{60.43}{m/s} \\
+\(V_h\) & \SI{70.55}{m/s} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Comentario de ingenieria.} El par \((D,L)\) satisface el enunciado, pero las velocidades de aire resultan altas. El diseno es termicamente valido bajo las hipotesis adoptadas, aunque antes de fabricar seria necesario revisar ruido, vibracion y perdidas menores.
+
+\subsection*{b) Variacion con el flujo masico equilibrado}
+
+Manteniendo \(D=\SI{6.69}{mm}\) y \(L=\SI{1.90}{m}\), el barrido entre \(\SI{0.002}{kg/s}\) y \(\SI{0.004}{kg/s}\) arroja los siguientes comportamientos:
+
+\begin{itemize}
+  \item La temperatura de salida de la corriente fria disminuye al aumentar \(\dot m\): pasa de \(\SI{351.67}{K}\) a \(\SI{346.35}{K}\).
+  \item La tasa de transferencia de calor aumenta casi linealmente: pasa de \(\SI{204.65}{W}\) a \(\SI{387.84}{W}\).
+  \item La caida de presion aumenta fuertemente y supera el limite de diseno cuando \(\dot m>\SI{0.0025}{kg/s}\): sube de \(\SI{10.19}{kPa}\) a \(\SI{34.05}{kPa}\).
+\end{itemize}
+
+Fisicamente esto ocurre porque al aumentar el flujo masico tambien aumenta el coeficiente convectivo y, por tanto, \(\dot Q\); sin embargo, el incremento de capacidad calorifica \(\dot m c_p\) es aun mayor, por lo que la corriente fria gana menos temperatura. Al mismo tiempo, la penalizacion hidraulica crece de manera no lineal.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.82\textwidth]{outputs/taller5_p3_parametrico.png}
+  \caption{Temperatura de salida de la corriente fria, carga termica y caida de presion para el punto 3 con geometria fija.}
+  \label{fig:p3}
+\end{figure}
+
+\section*{Resultados finales}
+
+\begin{itemize}
+  \item \textbf{Punto 1:} area requerida \(A \approx \SI{5.56}{m^2}\).
+  \item \textbf{Punto 2:} para el caso base \(T_{\mathrm{evap}}=\SI{0}{^\circ C}\), \(T_{\mathrm{cond}}=\SI{40}{^\circ C}\), se obtiene \(\dot Q \approx \SI{486.3}{kW}\), \(T_{w,o}\approx \SI{8.18}{^\circ C}\), \(\varepsilon\approx 0.455\), \(L_{\mathrm{req}}\approx \SI{66.27}{m}\) y \(N\approx 11\) pasos.
+  \item \textbf{Punto 3:} el diseno que satisface transferencia de calor y \(\Delta p_f\) es \(D\approx \SI{6.69}{mm}\) y \(L\approx \SI{1.90}{m}\).
+\end{itemize}
+
+\end{document}

@@ -1,0 +1,44 @@
+{
+  "meta": {
+    "description": "Editable nominal parameters",
+    "model_scope": "Equivalent f",
+    "transfer_area_note": ".
+  },
+  "geometry": {
+    "shell_inner_diameter_m": 0.45,
+    "shell_length_m": 1.39,
+    "furnace_inner_diameter_m": 0.20,
+    "furnace_outer_diameter_m": 0.208,
+    "return_tube_count": 22,
+    "return_tube_inner_diameter_m": 0.030,
+    "return_tube_outer_diameter_m": 0.034,
+    "return_tube_length_m": 1.39,
+    "front_view_inner_arc_radius_m": 0.125,
+    "front_view_outer_arc_radius_m": 0.165,
+    "gas_passes": 2,
+    "tube_wall_thermal_conductivity_w_mk": 45.0
+  },
+  "fuel": {
+    "fuel_model": "methane_equivalent",
+    "methane_mass_fraction_reference": 0.86,
+    "lower_heating_value_j_kg": 45700000.0,
+    "density_kg_m3_reference": 0.72
+  },
+  "operation": {
+    "useful_heat_output_w": 74570.0,
+    "overall_boiler_efficiency_assumed": 0.74,
+    "heat_exchanger_efficiency_assumed": 0.79,
+    "excess_air_ratio": 1.05,
+    "fuel_inlet_temperature_c": 25.0,
+    "air_inlet_temperature_c": 25.0,
+    "water_inlet_temperature_c": 25.0,
+    "water_inlet_pressure_bar_abs": 10.0,
+    "steam_outlet_temperature_c": 190.0,
+    "steam_outlet_pressure_bar_abs": 9.0,
+    "furnace_wall_temperature_c_guess": 250.0,
+    "return_tube_wall_temperature_c_guess": 220.0,
+    "water_side_wall_superheat_k": 20.0,
+    "furnace_emissivity_assumed": 0.28,
+    "return_tube_emissivity_assumed": 0.28
+  }
+}

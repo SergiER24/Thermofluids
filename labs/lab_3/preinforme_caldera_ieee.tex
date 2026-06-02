@@ -1,0 +1,344 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-noquoting,es-tabla]{babel}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{siunitx}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{cite}
+\usepackage[caption=false,font=footnotesize]{subfig}
+
+\renewcommand{\abstractname}{Resumen}
+\renewcommand{\IEEEkeywordsname}{Palabras clave}
+
+\title{Modelo T\'ermico de una Caldera Pirotubular para el LAB 3 de IMEC2203L}
+
+\author{
+\IEEEauthorblockN{Nombre Estudiante 1, Nombre Estudiante 2}
+\IEEEauthorblockA{Departamento de Ingenier\'ia Mec\'anica\\
+Universidad de los Andes\\
+Bogot\'a, Colombia\\
+\texttt{replace.with.real.emails@uniandes.edu.co}}
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Se formula un modelo t\'ermico nominal, dependiente de la geometr\'ia, para la caldera pirotubular tipo Armfield empleada en IMEC2203L, represent\'andola como un problema equivalente de intercambiador tubo-coraza con combusti\'on completa de gas natural equivalente a metano, temperatura de llama adiab\'atica, convecci\'on interna del lado gases, radiaci\'on linealizada del lado fuego, convecci\'on natural del lado agua, conducci\'on cil\'indrica en la pared y cierre por diferencia media logar\'itmica de temperatura. El modelo implementado se entrega como un cuaderno de Jupyter comentado, con par\'ametros nominales editables y salidas gr\'aficas, de forma que la geometr\'ia medida y los datos de operaci\'on de la Secci\'on 6.1.1 reemplacen directamente los valores por defecto.
+\end{abstract}
+
+\begin{IEEEkeywords}
+modelo de caldera, caldera pirotubular, intercambiador tubo-coraza, temperatura de llama adiab\'atica, convecci\'on natural, red de resistencias t\'ermicas
+\end{IEEEkeywords}
+
+\section{Definici\'on del Problema}
+La gu\'ia de laboratorio exige: i) idealizaci\'on geom\'etrica de la caldera, ii) operaci\'on nominal a $\SI{100}{hp}=\SI{74570}{W}$ de calor \'util entregado en vapor sobrecalentado, iii) combusti\'on completa de gas natural con metano como componente dominante, iv) temperatura de llama adiab\'atica ideal y v) predicci\'on de coeficientes de transferencia, conductancias, eficiencias y variables de operaci\'on esperadas antes de la campa\~na experimental \cite{uniandes2026}.
+
+El modelo implementado impone entonces
+\begin{equation}
+\dot{Q}_{u,\mathrm{nom}}=\SI{74570}{W}
+\label{eq:qnom}
+\end{equation}
+y cierra el dise\~no nominal mediante
+\begin{equation}
+\dot{Q}_{\mathrm{comb}}=\dot{Q}_{\mathrm{trans}}+\dot{Q}_{\mathrm{stack}},
+\qquad
+\dot{Q}_{\mathrm{trans}}=\dot{Q}_{u}+\dot{Q}_{\mathrm{post}}.
+\label{eq:global_balance}
+\end{equation}
+
+\section{Idealizaci\'on Geom\'etrica}
+El equipo real se simplifica como una caldera pirotubular compuesta por un hogar cil\'indrico central y dos bancos laterales sim\'etricos de tubos de retorno inmersos en una coraza llena de agua. Los gases de combusti\'on avanzan primero por el hogar grande y luego retornan por los tubos peque\~nos, mientras el agua y el vapor permanecen en el lado coraza. A partir de la vista frontal de la caldera, la disposici\'on nominal del preinforme considera 5 tubos interiores y 6 tubos exteriores por lado, para un total de 22 tubos de retorno, ubicados sobre dos arcos laterales de modo que sigan el radio de la caldera sin solaparse con el hogar central. El \'area de transferencia se divide por tanto en dos contribuciones:
+\begin{align}
+A_f &= \pi D_{f,o}L_f,
+\label{eq:af}\\
+A_t &= N_t \pi D_{t,o}L_t,
+\label{eq:at}\\
+A_{\mathrm{tot}} &= A_f + A_t.
+\label{eq:atot}
+\end{align}
+
+Por consiguiente, el \'area de transferencia es la suma de las \'areas externas de todos los pasos de gases mojados por el agua. Para la geometr\'ia presente esto implica incluir el hogar central y el banco de tubos de retorno. Solo si se desea de manera expl\'icita una aproximaci\'on reducida debe emplearse $A_t$ por s\'i sola.
+
+Los radios de arco usados para ubicar los tubos peque\~nos en la vista frontal son par\'ametros puramente geom\'etricos de dibujo. En el modelo t\'ermico nominal actual, cambiar esos radios no modifica $A_f$, $A_t$, $U_o$ ni $UA$, porque el cierre t\'ermico depende del n\'umero de tubos, di\'ametros, longitudes, conductividad de pared y condiciones de operaci\'on. Solo un modelo m\'as detallado de interacci\'on en el lado coraza har\'ia que la posici\'on de los tubos altere directamente la predicci\'on t\'ermica.
+
+La geometr\'ia nominal entregada con el cuaderno no corresponde a una medici\'on real; es solamente el caso por defecto que hace al modelo num\'ericamente autoconsistente y editable. El usuario debe sustituir estos valores por las dimensiones medidas en ML--041. La geometr\'ia generada por el cuaderno se muestra en la Fig.~\ref{fig:geom}.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth]{geometria_caldera_simplificada.pdf}
+\caption{Equivalente tubo-coraza simplificado empleado en el modelo nominal del preinforme.}
+\label{fig:geom}
+\end{figure}
+
+\begin{table}[!t]
+\caption{Par\'ametros geom\'etricos nominales entregados como valores editables}
+\label{tab:geom}
+\centering
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Par\'ametro & S\'imbolo & Valor \\
+\midrule
+Di\'ametro interno de coraza & $D_s$ & \SI{0.45}{m} \\
+Longitud de coraza/hogar & $L_f=L_t$ & \SI{1.39}{m} \\
+Di\'ametro interno del hogar & $D_{f,i}$ & \SI{0.20}{m} \\
+Di\'ametro externo del hogar & $D_{f,o}$ & \SI{0.208}{m} \\
+N\'umero de tubos de retorno & $N_t$ & 22 \\
+Di\'ametro interno del tubo de retorno & $D_{t,i}$ & \SI{0.030}{m} \\
+Di\'ametro externo del tubo de retorno & $D_{t,o}$ & \SI{0.034}{m} \\
+Conductividad de la pared & $k_w$ & \SI{45}{W\,m^{-1}\,K^{-1}} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Submodelo de Combusti\'on}
+El gas natural se modela como equivalente a metano, de acuerdo con la gu\'ia de laboratorio y con la hoja de seguridad de Ecopetrol para la composici\'on local del combustible \cite{ecopetrol2017}. Bajo combusti\'on completa con relaci\'on de exceso de aire $\lambda$,
+\begin{equation}
+\mathrm{CH}_4 + 2\lambda \left(\mathrm{O}_2 + 3.76\mathrm{N}_2\right)
+\rightarrow
+\mathrm{CO}_2 + 2\mathrm{H}_2\mathrm{O} + 2(\lambda-1)\mathrm{O}_2 + 7.52\lambda\mathrm{N}_2.
+\label{eq:stoich}
+\end{equation}
+
+La tasa de liberaci\'on de calor qu\'imico es
+\begin{equation}
+\dot{Q}_{\mathrm{comb}}=\dot{m}_f\,PCI,
+\label{eq:qcomb}
+\end{equation}
+con $PCI=\SI{45.7}{MJ\,kg^{-1}}$ \cite{uniandes2026}. El flujo m\'asico nominal de combustible se obtiene a partir de la eficiencia global asumida de la caldera:
+\begin{equation}
+\dot{m}_f=\frac{\dot{Q}_{u,\mathrm{nom}}}{\eta_b\,PCI}.
+\label{eq:mf}
+\end{equation}
+
+La temperatura de llama adiab\'atica se obtiene del balance de entalp\'ia
+\begin{equation}
+\sum_{r} n_r \bar{h}_r(T_{\mathrm{in}})
++ \Delta \bar{h}_{\mathrm{comb}}
+=
+\sum_{p} n_p \bar{h}_p(T_{\mathrm{ad}}),
+\label{eq:tad}
+\end{equation}
+donde el cuaderno eval\'ua entalp\'ias molares dependientes de la temperatura usando CoolProp. La temperatura de salida de gases se obtiene entonces de
+\begin{equation}
+\dot{Q}_{\mathrm{trans}}
+=
+\dot{n}_f
+\left[
+\bar{h}_{g}(T_{\mathrm{ad}})
+-\bar{h}_{g}(T_{g,o})
+\right].
+\label{eq:tgout}
+\end{equation}
+
+\section{Modelo Energ\'etico del Agua y el Vapor}
+El calor \'util transferido a la corriente agua-vapor es
+\begin{equation}
+\dot{Q}_u=\dot{m}_w\left(h_{w,o}-h_{w,i}\right),
+\label{eq:qwater}
+\end{equation}
+donde $h_{w,i}$ y $h_{w,o}$ se eval\'uan a partir de estados medidos o asumidos de entrada y salida empleando propiedades termof\'isicas del agua. El flujo m\'asico nominal de agua resulta
+\begin{equation}
+\dot{m}_w=\frac{\dot{Q}_{u,\mathrm{nom}}}{h_{w,o}-h_{w,i}}.
+\label{eq:mw}
+\end{equation}
+
+\section{Transferencia de Calor del Lado Fuego}
+El modelo emplea un coeficiente convectivo para el paso por el hogar y otro para el banco de tubos de retorno. Para flujo interno de gases, el n\'umero de Reynolds es
+\begin{equation}
+\mathrm{Re}_g = \frac{\rho_g V_g D_h}{\mu_g}.
+\label{eq:re}
+\end{equation}
+
+Si $\mathrm{Re}_g<2300$, el cuaderno aplica la correlaci\'on de Hausen para flujo en desarrollo:
+\begin{equation}
+\mathrm{Nu}_g =
+3.66 + \frac{0.0668\,\mathrm{Gz}}{1+0.04\,\mathrm{Gz}^{2/3}},
+\qquad
+\mathrm{Gz}=\mathrm{Re}_g\mathrm{Pr}_g\frac{D_h}{L}.
+\label{eq:hausen}
+\end{equation}
+
+Si $\mathrm{Re}_g\geq2300$, el cuaderno conmuta a la correlaci\'on de Gnielinski \cite{gnielinski1976}:
+\begin{equation}
+\mathrm{Nu}_g =
+\frac{\left(f/8\right)\left(\mathrm{Re}_g-1000\right)\mathrm{Pr}_g}
+{1+12.7\left(f/8\right)^{1/2}\left(\mathrm{Pr}_g^{2/3}-1\right)},
+\label{eq:gnielinski}
+\end{equation}
+con la aproximaci\'on de Petukhov para el factor de fricci\'on en tubo liso
+\begin{equation}
+f=\left(0.79\ln\mathrm{Re}_g-1.64\right)^{-2}.
+\label{eq:petukhov}
+\end{equation}
+
+Por lo tanto,
+\begin{equation}
+h_{g,j}=\frac{\mathrm{Nu}_{g,j}k_g}{D_{h,j}},
+\qquad j\in\{f,t\}.
+\label{eq:hg}
+\end{equation}
+
+Para incorporar la contribuci\'on radiativa de los gases calientes de combusti\'on, se suma un coeficiente radiativo linealizado del lado fuego:
+\begin{equation}
+h_{r,j}=\varepsilon_j \sigma (T_{g,m}+T_{w,j})(T_{g,m}^{2}+T_{w,j}^{2}),
+\qquad j\in\{f,t\}.
+\label{eq:hrad}
+\end{equation}
+
+El coeficiente efectivo del lado fuego es entonces
+\begin{equation}
+h_{\mathrm{fire},j}=h_{g,j}+h_{r,j}.
+\label{eq:hfire}
+\end{equation}
+
+\section{Convecci\'on Natural del Lado Agua y Conducci\'on en la Pared}
+En el lado coraza, el modelo del preinforme adopta convecci\'on natural alrededor de cilindros horizontales. Se utiliza la correlaci\'on cerrada de Churchill--Chu \cite{churchill1975}:
+\begin{equation}
+\mathrm{Ra}_D=\frac{g\beta \Delta T D^3}{\nu \alpha},
+\label{eq:ra}
+\end{equation}
+\begin{equation}
+\mathrm{Nu}_w=
+\left[
+0.60+\frac{0.387\,\mathrm{Ra}_D^{1/6}}
+{\left(1+\left(0.559/\mathrm{Pr}\right)^{9/16}\right)^{8/27}}
+\right]^2,
+\label{eq:churchillchu}
+\end{equation}
+\begin{equation}
+h_{w,j}=\frac{\mathrm{Nu}_{w,j}k_w}{D_{o,j}},
+\qquad j\in\{f,t\}.
+\label{eq:hw}
+\end{equation}
+manteniendo la revisi\'on de Morgan como referencia complementaria para el mapa de reg\'imen de convecci\'on libre sobre cilindros \cite{morgan1975}.
+
+El handbook suministrado para este proyecto sigue siendo \'util como referencia de dise\~no porque remite a las metodolog\'ias cl\'asicas del lado coraza de Kern, Bell--Delaware y correlaciones ideales de haces tubulares para intercambiadores no calefaccionados por combusti\'on \cite{thulukkanam2013,bell1981,taborek1983}. Sin embargo, dichos m\'etodos est\'an formulados para flujo forzado en coraza con bafles o con an\'alisis bien definidos de corrientes transversales, de fuga y de bypass. En la caldera pirotubular presente, el lado coraza contiene agua y vapor alrededor de un hogar y un haz de tubos de retorno, con recirculaci\'on d\'ebilmente organizada y posible ebullici\'on local. Por ello, el modelo nominal del preinforme conserva el cierre por convecci\'on natural como la base m\'as defendible hasta que la evidencia experimental justifique un tratamiento m\'as avanzado del lado coraza.
+
+Para cada pared cil\'indrica,
+\begin{equation}
+\frac{1}{U_{o,j}}=
+\frac{1}{h_{w,j}}
++\frac{D_{o,j}\ln(D_{o,j}/D_{i,j})}{2k_w}
++\frac{D_{o,j}}{D_{i,j}h_{\mathrm{fire},j}},
+\qquad j\in\{f,t\}.
+\label{eq:uo}
+\end{equation}
+
+La conductancia total es
+\begin{equation}
+UA_{\mathrm{tot}}=U_{o,f}A_f+U_{o,t}A_t.
+\label{eq:uatot}
+\end{equation}
+
+\section{Cierre por DMLT y Desempe\~no Nominal}
+El cierre del intercambiador se escribe como
+\begin{equation}
+\dot{Q}_{UA}=UA_{\mathrm{tot}}\Delta T_{\mathrm{lm}},
+\label{eq:qua}
+\end{equation}
+donde
+\begin{equation}
+\Delta T_{\mathrm{lm}}=
+\frac{\Delta T_1-\Delta T_2}
+{\ln\left(\Delta T_1/\Delta T_2\right)},
+\label{eq:lmtd}
+\end{equation}
+con
+\begin{equation}
+\Delta T_1=T_{\mathrm{ad}}-T_{w,i},
+\qquad
+\Delta T_2=T_{g,o}-T_{s,o}.
+\label{eq:dts}
+\end{equation}
+
+El caso nominal por defecto usa
+\begin{equation}
+\eta_b=0.74,
+\qquad
+\eta_{hx}=0.79,
+\qquad
+\lambda=1.05.
+\label{eq:nominal_eff}
+\end{equation}
+
+El punto de operaci\'on predicho se resume en la Tabla~\ref{tab:results}. Estos son los valores que deben reemplazarse o revalidarse una vez se incorporen la geometr\'ia medida y los datos operativos reales al archivo de par\'ametros.
+
+\begin{table}[!t]
+\caption{Salidas nominales del modelo para el caso editable por defecto}
+\label{tab:results}
+\centering
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Salida & S\'imbolo & Valor \\
+\midrule
+Temperatura de llama adiab\'atica & $T_{\mathrm{ad}}$ & \SI{1635.1}{\degreeCelsius} \\
+Temperatura de salida de gases & $T_{g,o}$ & \SI{217.1}{\degreeCelsius} \\
+Flujo m\'asico de combustible & $\dot{m}_f$ & \SI{7.94}{kg\,h^{-1}} \\
+Flujo m\'asico de agua & $\dot{m}_w$ & \SI{99.27}{kg\,h^{-1}} \\
+Conductancia externa del hogar & $U_{o,f}$ & \SI{49.62}{W\,m^{-2}\,K^{-1}} \\
+Conductancia externa del haz de tubos & $U_{o,t}$ & \SI{49.24}{W\,m^{-2}\,K^{-1}} \\
+\'Area total de transferencia & $A_{\mathrm{tot}}$ & \SI{4.17}{m^2} \\
+Conductancia total & $UA_{\mathrm{tot}}$ & \SI{205.89}{W\,K^{-1}} \\
+Calor predicho por $UA$ & $\dot{Q}_{UA}$ & \SI{79.81}{kW} \\
+Calor nominal transferido & $\dot{Q}_{\mathrm{trans}}$ & \SI{79.61}{kW} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+La raz\'on de autoconsistencia del caso nominal por defecto es
+\begin{equation}
+\frac{\dot{Q}_{UA}}{\dot{Q}_{\mathrm{trans}}}=1.0026,
+\label{eq:consistency}
+\end{equation}
+lo cual es suficientemente cercano a la unidad para un caso de referencia editable de preinforme.
+
+\section{Estructura del C\'odigo y Decisiones de Implementaci\'on}
+La fuente ejecutable es el cuaderno \texttt{modelo\_caldera\_lab3.ipynb}. Su estructura sigue de forma directa la l\'ogica del modelado:
+\begin{enumerate}
+\item \textbf{Carga de par\'ametros}: el archivo \texttt{parametros\_nominales\_caldera.json} centraliza todos los datos editables de geometr\'ia, combustible y operaci\'on.
+\item \textbf{Soporte termof\'isico}: las propiedades se eval\'uan con CoolProp para evitar aproximaciones de propiedad constante en entalp\'ias y c\'alculos de saturaci\'on.
+\item \textbf{Bloque de combusti\'on}: estequiometr\'ia, composici\'on de productos, temperatura de llama adiab\'atica y temperatura de salida de gases.
+\item \textbf{Bloque de transferencia}: convecci\'on del lado gases, radiaci\'on del lado fuego, convecci\'on natural del lado agua, resistencias cil\'indricas y $UA$ total.
+\item \textbf{Bloque de desempe\~no}: $\dot{m}_f$, $\dot{m}_w$, $\dot{Q}_{\mathrm{comb}}$, $\dot{Q}_{\mathrm{trans}}$, $\dot{Q}_{UA}$, p\'erdidas y eficiencias.
+\item \textbf{Gr\'aficas}: esquema geom\'etrico, diagrama de balance energ\'etico, comparaci\'on de coeficientes y conductancias, y curvas de sensibilidad.
+\end{enumerate}
+
+El cuaderno est\'a comentado en ingl\'es a nivel de l\'inea y de funci\'on para que la implementaci\'on pueda auditarse, modificarse y asociarse de forma directa con las Ecs.~(\ref{eq:qcomb})--(\ref{eq:consistency}).
+
+\section{Variables Requeridas del Laboratorio}
+Para reemplazar el caso nominal por defecto con la caldera medida, se requieren las siguientes entradas exactamente como las solicita la Secci\'on~6.2 de la gu\'ia \cite{uniandes2026}:
+\begin{equation}
+\left\{
+D_{\mathrm{gas,in}},
+D_{\mathrm{water,in}},
+D_s,
+D_{f,i},D_{f,o},
+D_{t,i},D_{t,o},
+L_f,L_t,
+N_t,
+P_{g,\mathrm{in}},
+P_{w,\mathrm{in}},
+P_{s,\mathrm{out}},
+T_{w,\mathrm{in}},
+T_{s,\mathrm{out}},
+\dot{m}_w,
+\dot{m}_g,
+y_{\mathrm{N_2,out}}
+\right\}.
+\label{eq:reqdata}
+\end{equation}
+
+Estas variables se mapean uno a uno con el archivo editable de par\'ametros y con las salidas requeridas posteriormente para el informe final.
+
+\section{Conclusi\'on}
+El modelo entregado para el preinforme satisface el requerimiento del laboratorio al proveer: i) una abstracci\'on geom\'etrica simplificada de la caldera, ii) un modelo t\'ermico ejecutable basado en Python y iii) un documento que explicita los supuestos, desarrollos y decisiones de c\'odigo que conducen a la soluci\'on nominal completa. Los valores por defecto son deliberadamente editables y deben reemplazarse por la geometr\'ia medida y por las condiciones reales de operaci\'on antes de la etapa de comparaci\'on experimental.
+
+\bibliographystyle{IEEEtran}
+\bibliography{referencias_preinforme}
+
+\end{document}
