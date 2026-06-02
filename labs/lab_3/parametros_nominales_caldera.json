@@ -1,8 +1,8 @@
 {
   "meta": {
-    "description": "Editable nominal parameters",
-    "model_scope": "Equivalent f",
-    "transfer_area_note": ".
+    "description": "Editable nominal parameters for the fire-tube boiler model",
+    "model_scope": "Equivalent fire-tube heat-exchanger representation",
+    "transfer_area_note": "Replace nominal values with measured ML-041 geometry when available."
   },
   "geometry": {
     "shell_inner_diameter_m": 0.45,

@@ -5,8 +5,8 @@ from pathlib import Path
 import nbformat as nbf
 
 
-ROOT = Path(__file__).resolve().parents[2]
-NOTEBOOK = ROOT / "notebooks" / "Taller5_HX_CoolProp.ipynb"
+ROOT = Path(__file__).resolve().parents[1]
+NOTEBOOK = ROOT / "notebooks" / "heat_exchanger_design.ipynb"
 
 
 def main() -> None:
@@ -49,13 +49,13 @@ Si el profesor da otra pareja de temperaturas, basta cambiar esos dos parámetro
 import sys
 
 ROOT = Path.cwd().resolve()
-MODEL_DIR = ROOT / 'talleres' / 'taller_5'
+MODEL_DIR = ROOT / 'src'
 if str(MODEL_DIR) not in sys.path:
     sys.path.insert(0, str(MODEL_DIR))
 
 import numpy as np
 from IPython.display import Image, display
-from taller5_hx_model import (
+from thermofluids.heat_exchanger import (
     problem1,
     problem2,
     problem3_design,
@@ -107,9 +107,9 @@ to_dict(p2)
 
     cells.append(
         nbf.v4.new_code_cell(
-            """fig_dir = ROOT / 'outputs'
+            """fig_dir = ROOT / 'figures'
 fig_dir.mkdir(exist_ok=True)
-fig_p2 = generate_problem2_figure(p2, fig_dir / 'taller5_p2_temperaturas.png')
+fig_p2 = generate_problem2_figure(p2, fig_dir / 'evaporator_temperature_profile.png')
 display(Image(filename=str(fig_p2)))
 """
         )
@@ -139,7 +139,7 @@ to_dict(p3)
         nbf.v4.new_code_cell(
             """m_values = np.linspace(0.002, 0.004, 21)
 rows = problem3_parametric(D=p3.D_m, L=p3.L_m, m_values=m_values)
-fig_p3 = generate_problem3_figure(rows, ROOT / 'outputs' / 'taller5_p3_parametrico.png')
+fig_p3 = generate_problem3_figure(rows, ROOT / 'figures' / 'heat_exchanger_parametric.png')
 display(Image(filename=str(fig_p3)))
 """
         )

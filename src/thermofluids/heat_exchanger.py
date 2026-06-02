@@ -74,7 +74,7 @@ class Problem3DesignResult:
 
 def lmtd_counterflow(dt1: float, dt2: float) -> float:
     if dt1 <= 0 or dt2 <= 0:
-        raise ValueError("La LMTD requiere diferencias terminales positivas.")
+        raise ValueError("LMTD requires positive terminal temperature differences.")
     if abs(dt1 - dt2) < 1e-12:
         return dt1
     return (dt1 - dt2) / math.log(dt1 / dt2)
@@ -402,11 +402,11 @@ def generate_problem2_figure(result: Problem2Result, output_path: str | Path) ->
     output_path.parent.mkdir(parents=True, exist_ok=True)
     x, Tw, Tr = problem2_temperature_profile(result)
     plt.figure(figsize=(7.2, 4.4))
-    plt.plot(x, Tw, label="Agua", linewidth=2.3)
+    plt.plot(x, Tw, label="Water", linewidth=2.3)
     plt.plot(x, Tr, label="R134a (Tsat)", linewidth=2.3, linestyle="--")
-    plt.xlabel("Longitud acumulada del tubo [m]")
-    plt.ylabel("Temperatura [°C]")
-    plt.title("Punto 2: Perfil de temperaturas a lo largo del evaporador")
+    plt.xlabel("Accumulated tube length [m]")
+    plt.ylabel("Temperature [°C]")
+    plt.title("R134a evaporator temperature profile")
     plt.grid(True, alpha=0.25)
     plt.legend()
     plt.tight_layout()
@@ -425,7 +425,7 @@ def generate_problem3_figure(rows: list[dict[str, float]], output_path: str | Pa
 
     fig, axes = plt.subplots(3, 1, figsize=(7.2, 9.0), sharex=True)
     axes[0].plot(m, Tco, color="#0a6c74", linewidth=2.2)
-    axes[0].set_ylabel(r"$T_{c,salida}$ [°C]")
+    axes[0].set_ylabel(r"$T_{c,out}$ [°C]")
     axes[0].grid(True, alpha=0.25)
 
     axes[1].plot(m, Q, color="#bc4b0a", linewidth=2.2)
@@ -434,10 +434,10 @@ def generate_problem3_figure(rows: list[dict[str, float]], output_path: str | Pa
 
     axes[2].plot(m, dp, color="#5a3d9a", linewidth=2.2)
     axes[2].set_ylabel(r"$\Delta p_f$ [kPa]")
-    axes[2].set_xlabel(r"Flujo másico equilibrado [kg/s]")
+    axes[2].set_xlabel(r"Balanced mass flow rate [kg/s]")
     axes[2].grid(True, alpha=0.25)
 
-    fig.suptitle("Punto 3: Respuesta del intercambiador con D y L fijos")
+    fig.suptitle("Double-pipe exchanger response with fixed D and L")
     fig.tight_layout()
     fig.savefig(output_path, dpi=180)
     plt.close(fig)
@@ -449,12 +449,12 @@ def generate_all_figures(output_dir: str | Path) -> dict[str, Path]:
     p2 = problem2()
     p3 = problem3_design()
     rows = problem3_parametric(D=p3.D_m, L=p3.L_m, m_values=np.linspace(0.002, 0.004, 21))
-    fig2 = generate_problem2_figure(p2, output_dir / "taller5_p2_temperaturas.png")
-    fig3 = generate_problem3_figure(rows, output_dir / "taller5_p3_parametrico.png")
+    fig2 = generate_problem2_figure(p2, output_dir / "evaporator_temperature_profile.png")
+    fig3 = generate_problem3_figure(rows, output_dir / "heat_exchanger_parametric.png")
     return {"p2": fig2, "p3": fig3}
 
 
 def to_dict(obj: object) -> dict:
     if hasattr(obj, "__dataclass_fields__"):
         return asdict(obj)
-    raise TypeError(f"Objeto no serializable: {type(obj)!r}")
+    raise TypeError(f"Object is not serializable: {type(obj)!r}")
